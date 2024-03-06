@@ -1,8 +1,12 @@
 package com.example.camera;
 
+import static com.arthenica.mobileffmpeg.Config.RETURN_CODE_CANCEL;
+import static com.arthenica.mobileffmpeg.Config.RETURN_CODE_SUCCESS;
+
 import android.Manifest;
 import android.content.ContentValues;
 import android.content.pm.PackageManager;
+import android.hardware.camera2.CaptureRequest;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -16,9 +20,13 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.camera.camera2.interop.Camera2Interop;
 import androidx.camera.core.Camera;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.Preview;
+import androidx.camera.core.impl.ImageAnalysisConfig;
+import androidx.camera.core.impl.UseCaseConfig;
+import androidx.camera.core.impl.UseCaseConfig.Builder;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.video.MediaStoreOutputOptions;
 import androidx.camera.video.Quality;
@@ -32,11 +40,14 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.arthenica.mobileffmpeg.Config;
+import com.arthenica.mobileffmpeg.ExecuteCallback;
 import com.arthenica.mobileffmpeg.FFmpeg;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -155,8 +166,8 @@ public class MainActivity extends AppCompatActivity {
 
                 Recorder recorder = new Recorder.Builder()
                         .setQualitySelector(QualitySelector.from(Quality.FHD))
-
                         .build();
+
                 videoCapture = VideoCapture.withOutput(recorder);
 
                 cameraProvider.unbindAll();
@@ -165,6 +176,9 @@ public class MainActivity extends AppCompatActivity {
                         .requireLensFacing(cameraFacing).build();
 
                 Camera camera = cameraProvider.bindToLifecycle(this, cameraSelector, preview, videoCapture);
+
+
+
 
                 toggleFlash.setOnClickListener(view -> toggleFlash(camera));
             } catch (ExecutionException | InterruptedException e) {
@@ -225,23 +239,43 @@ public class MainActivity extends AppCompatActivity {
 //    }
     private void addTimestamp(String videoPath) {
         String inputPath = videoPath;
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy MM dd ", Locale.getDefault());
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
+
+        String currentDate = dateFormat.format(new Date());
+
+
+
+        int hour =Calendar.getInstance().get(Calendar.HOUR);
+        int minute = Calendar.getInstance().get(Calendar.MINUTE);
+        int second = Calendar.getInstance().get(Calendar.SECOND);
+
+        int offset = hour*60*60+minute*60+second;
 
         String outputPath = videoPath.replace(".mp4", "_1.mp4");
-        String[] cmd = {
-                "-i", inputPath,
-                "-vf","setpts=PTS-STARTPTS", "drawtext=text='Wall Clock Time/: %{pts/:gmtime/:1456007118}':fontcolor=white:fontsize=50:box=1:fontfile=/system/fonts/DroidSans.ttf:boxcolor=black@0.5:boxborderw=5:x=200:y=1000",
-                "-acodec",
-                "copy",
-                outputPath
-        };
+//        String[] cmd = {
+//                "-i", inputPath,
+//                "-vf", "drawtext=text='" + currentDate + " %{pts\\:hms\\:" + offset + "}':fontcolor=white:fontsize=50:box=1:fontfile=/system/fonts/DroidSans.ttf:boxcolor=black@0.5:boxborderw=5:x=200:y=1000",
+//               "-r", "60",
+//                "-acodec",
+//                "copy",
+//                outputPath
+//        };
+        String cmd = "-i " + inputPath +
+                " -vf drawtext=text='" + currentDate + " %{pts\\\\:hms\\\\:" + offset + "}':fontcolor=white:fontsize=50:box=1:fontfile=/system/fonts/DroidSans.ttf:boxcolor=black@0.5:boxborderw=5:x=200:y=1000" +
+                " -r 60" +
+                " -acodec copy" +
+                " " + outputPath;
 
-//        ffmpeg -i test.mp4 -vf "drawtext=text='Stack Overflow':fontcolor=white:fontsize=24:box=1:boxcolor=black@0.5:boxborderw=5:x=(w-text_w)/2:y=(h-text_h)/2" -codec:a copy test1.mp4
-        int rc = FFmpeg.execute(cmd);
-        if (rc == Config.RETURN_CODE_SUCCESS) {
-            Toast.makeText(this, "Timestamp added successfully", Toast.LENGTH_SHORT).show();
-        } else {
-            Toast.makeText(this, "Failed to add timestamp", Toast.LENGTH_SHORT).show();
-        }
+        long executionId = FFmpeg.executeAsync(cmd, (executionId1, returnCode) -> {
+            if (returnCode == RETURN_CODE_SUCCESS) {
+                Log.i(Config.TAG, "Async command execution completed successfully.");
+            } else if (returnCode == RETURN_CODE_CANCEL) {
+                Log.i(Config.TAG, "Async command execution cancelled by user.");
+            } else {
+                Log.i(Config.TAG, String.format("Async command execution failed with returnCode=%d.", returnCode));
+            }
+        });
     }
 }
 

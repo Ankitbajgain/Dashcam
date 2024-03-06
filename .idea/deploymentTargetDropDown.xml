@@ -3,40 +3,7 @@
   <component name="deploymentTargetDropDown">
     <value>
       <entry key="app">
-        <State>
-          <runningDeviceTargetSelectedWithDropDown>
-            <Target>
-              <type value="RUNNING_DEVICE_TARGET" />
-              <deviceKey>
-                <Key>
-                  <type value="SERIAL_NUMBER" />
-                  <value value="adb-bc4c9277-EKa2Bp._adb-tls-connect._tcp" />
-                </Key>
-              </deviceKey>
-            </Target>
-          </runningDeviceTargetSelectedWithDropDown>
-          <timeTargetWasSelectedWithDropDown value="2024-03-05T09:43:40.333675300Z" />
-          <runningDeviceTargetsSelectedWithDialog>
-            <Target>
-              <type value="RUNNING_DEVICE_TARGET" />
-              <deviceKey>
-                <Key>
-                  <type value="SERIAL_NUMBER" />
-                  <value value="192.168.1.91:5555" />
-                </Key>
-              </deviceKey>
-            </Target>
-            <Target>
-              <type value="RUNNING_DEVICE_TARGET" />
-              <deviceKey>
-                <Key>
-                  <type value="SERIAL_NUMBER" />
-                  <value value="adb-bc4c9277-EKa2Bp._adb-tls-connect._tcp" />
-                </Key>
-              </deviceKey>
-            </Target>
-          </runningDeviceTargetsSelectedWithDialog>
-        </State>
+        <State />
       </entry>
     </value>
   </component>
